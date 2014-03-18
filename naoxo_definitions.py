@@ -1,0 +1,15 @@
+'''
+Definitions for nao_xo class
+
+@author: FP
+'''
+
+## intrinsic camera parameters
+intrinsic_params = [573.19, 573.19, 319.5, 239.5, 0]
+
+## safe positions for robot arms
+right_safe = [0.137571781873703, -0.19569815695285797, 0.3173384964466095, 2.933786153793335, 0.20195309817790985, -0.5624427199363708]
+left_safe = [0.14798468351364136, 0.19194336235523224, 0.3202506899833679, 2.9153354167938232, 0.20549634099006653, 0.5102244019508362]
+
+## orientation at goal point
+goal_orientation = [0.0, 0.0, 0.0]
