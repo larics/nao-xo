@@ -347,17 +347,23 @@ class NaoXO():
         Checks if game is over and what is the outcome
         '''
         
+	
         if pobjeda(self.board) == 'nerjeseno':
+	    ## return that the game is draw
             return 0
         if self.mode == 'x' and pobjeda(self.board) == 'pobjeda x':
+	    ## robot won
             return 1
         if self.mode == 'x' and pobjeda(self.board) == 'pobjeda o':
+            ## opponent won
             return 2
         if self.mode == 'o' and pobjeda(self.board) == 'pobjeda o':
+            ## robot won
             return 1
         if self.mode == 'o' and pobjeda(self.board) == 'pobjeda x':
+            ## opponent won
             return 2
-        
+        ## default return
         return -1
     
     def checkValidity(self, new_state, old_state, mode):
