@@ -6,7 +6,7 @@ As of 18.3.2014.
 '''
 
 ## import image processing definitions
-from imgProcessing_definitions import *
+from imgproc_definitions import *
 
 ## import OpenCV module
 import cv2
@@ -52,7 +52,11 @@ class ImgProcessingXO():
         ## Extract edges
         edges = cv2.Canny(self.img_grayscale, self.lCanny, self.uCanny)
         ## Apply Hough transformation to obtain lines
-        lines = cv2.HoughLines(edges, self.rhoRes, self.thetaRes, self.houghThreshold)[0]
+	try:
+		lines = cv2.HoughLines(edges, self.rhoRes, self.thetaRes, self.houghThreshold)[0]
+	except:
+		print("No lines found")
+		return []
         return lines
     
     def getEndPoints(self, lines):
@@ -155,6 +159,9 @@ class ImgProcessingXO():
         '''
         Merges end lines based on their endpoints in the image. If distance between endings of several lines is smaller than RelTol, lines will be merged
         '''
+	## check if there are lines
+	if not lines:
+		return []
         ## calculate end points for lines
         pts1, pts2 = self.getEndPoints(lines)
         lines_merged = []

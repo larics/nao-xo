@@ -242,13 +242,16 @@ class NaoXO():
         self.img = self.getImage()
         ## find and merge lines
         self.lines = self.imgproc.mergeEndPoints(self.imgproc.preprocessLines(self.img), 0.05)
+	## if there are no lines, return false	
+	if not self.lines:
+		return False
         ## find and index intersections
         self.intersections = self.imgproc.getIndexedIntersections(self.lines)
         ## index lines
         self.lines = self.imgproc.indexLines(self.intersections)
         ## field homogeneous transformation matrix
         self.T_field = np.zeros((4,4), dtype=np.float64)
-        ## if there are not exactly four intersections return empty matrix
+        ## if there are not exactly four intersections return false
         if not self.intersections:
             return False
         if not len(self.intersections)==4:
