@@ -160,8 +160,8 @@ class ImgProcessingXO():
         Merges end lines based on their endpoints in the image. If distance between endings of several lines is smaller than RelTol, lines will be merged
         '''
 	## check if there are lines
-	if not lines:
-		return []
+	#if not lines:
+	#	return []
         ## calculate end points for lines
         pts1, pts2 = self.getEndPoints(lines)
         lines_merged = []
