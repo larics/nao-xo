@@ -243,7 +243,7 @@ class NaoXO():
         ## find and merge lines
         self.lines = self.imgproc.mergeEndPoints(self.imgproc.preprocessLines(self.img), 0.05)
 	## if there are no lines, return false	
-	if not self.lines:
+	if not self.lines or not len(self.lines)==4:
 		return False
         ## find and index intersections
         self.intersections = self.imgproc.getIndexedIntersections(self.lines)
