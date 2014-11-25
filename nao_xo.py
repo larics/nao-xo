@@ -209,6 +209,7 @@ class NaoXO():
         self.behavior.runBehavior("Stand up")
         ## Go to walk init pose
         self.motion.walkInit()
+        self.torso_default = self.motion.getPosition("Torso", 2, True)
         
         ## Release stiffnesses of the arms
         self.motion.setStiffnesses("RArm", 0.0)
@@ -488,52 +489,88 @@ class NaoXO():
         self.motion.closeHand(nameHand)
         
         ## enable control of the arm
+        print("Enableing whole body motion")
         self.motion.wbEnableEffectorControl(nameEffector, True)
         
         ## extract current position and elevate the hand
         currPos = self.motion.getPosition(nameEffector,2, True)
-        currPos[0] = currPos[0]+0.03
-        currPos[2] = currPos[0]+0.2
+        positions = []
+        times = []
+        currPos[0] = currPos[0]
+        currPos[2] = currPos[0]+0.15
         self.motion.closeHand(nameHand)
         self.motion.setStiffnesses(nameEffector, 1.0)
         
-        for i in range(5):
-            time.sleep(0.3)
-            self.motion.wbSetEffectorControl(nameEffector, currPos[:3])
+        
+        positions.append(currPos)
+        times.append(1)
+#        print("Lifting hand")
+#        for i in range(5):
+#            print("%s of 5" % i )
+#            time.sleep(0.3)
+#            self.motion.wbSetEffectorControl(nameEffector, currPos[:3])
+#        print("Waiting")
+#        time.sleep(10.5)
+        
+        print("Changing orientation")
+        currPos[3:6] = [0.0]*3
+        positions.append(currPos)
+        times.append(3)
         
         ## extract goal position and move arm towards it
-        goalPosition = [goalPos[0,0], goalPos[1,0], goalPos[2,0]+self.height, 0.0, 0.0, 0.0]
+        goalPosition = [goalPos[0,0], goalPos[1,0], goalPos[2,0]+self.height/2.0, 0.0, 0.0, 0.0]
         
-        for i in range(5):
-            self.motion.wbSetEffectorControl(nameEffector, goalPosition[:3])
-            time.sleep(0.3)
+        positions.append(goalPosition)
+        times.append(7)        
+        self.motion.positionInterpolations(nameEffector, 2, positions, 63, times)
+        
+        
+    
+    
+#        for _ in range(5):
+#            self.motion.wbSetEffectorControl(nameEffector, goalPosition[:3])
+#            time.sleep(0.3)
+#        time.sleep(0.5)
+#        self.motion.positionInterpolations(nameEffector, 2, goalPosition, 56, 3)
         
         ## open hand to release the object
         time.sleep(0.5)
         self.motion.openHand(nameHand)
         time.sleep(0.5)
         
+        positions = []
+        times = []
         ## obtain current postion and elevate the arm        
         currPos = self.motion.getPosition(nameEffector,2, True)
-        currPos[2] = currPos[2]+0.1
-        for i in range(5):
-            self.motion.wbSetEffectorControl(nameEffector, currPos[:3])
-            time.sleep(0.3)
-        time.sleep(0.3)
+        currPos[2] = currPos[2]+0.15
+        positions.append(currPos)
+        times.append(2)
+#        for _ in range(5):
+#            self.motion.wbSetEffectorControl(nameEffector, currPos[:3])
+#            time.sleep(0.3)
+#        self.motion.setPositions(nameEffector, 2, currPos, 0.5, 63)
+#        time.sleep(0.3)
         
         ## return to safe position
         if nameEffector == 'RArm':
-            for i in range(5):
-                self.motion.wbSetEffectorControl(nameEffector, right_safe[:3])
-                time.sleep(0.3)
+#            time.sleep(0.3)
+#            for _ in range(5):
+#                self.motion.wbSetEffectorControl(nameEffector, right_safe[:3])
+#                time.sleep(0.3)
+            positions.append(right_safe)
+            times.append(6)
         else:
-            for i in range(5):
-                self.motion.wbSetEffectorControl(nameEffector, left_safe[:3])
-                time.sleep(0.3)
+#            self.motion.setPositions(nameEffector, 2, right_safe, 0.5, 63)
+#            time.sleep(0.3)
+#            for _ in range(5):
+#                self.motion.wbSetEffectorControl(nameEffector, left_safe[:3])
+#                time.sleep(0.3)
+            positions.append(left_safe)
+            times.append(6)
         time.sleep(0.5)
-        
+        self.motion.positionInterpolations([nameEffector, "Torso"], 2, [positions, self.torso_default], 63, [times, times[-1]])
         ## disable whole body control
-        self.motion.wbEnableEffectorControl(nameEffector, False)
+        #self.motion.wbEnableEffectorControl(nameEffector, False)
         ## put hands in specific position, useful for easier object placement
         ## TODO: remove hard coding
         if nameEffector == 'RArm':
@@ -600,7 +637,7 @@ class NaoXO():
                 while not self.findField():
                     print("[WARN ] Field not found")
                     self.drawstuff(False)
-                new_state, new_board = self.imgproc.getGameState(self.img, self.lines)
+                new_state, _ = self.imgproc.getGameState(self.img, self.lines)
                 
                 print("[INFO ] New state %s" % new_state)
                 print("[INFO ] Old state %s" % self.state)
@@ -667,9 +704,3 @@ class NaoXO():
         
         ## defualt return
         return False
-        
-        
-        
-        
-        
-        
