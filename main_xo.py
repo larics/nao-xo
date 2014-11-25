@@ -24,6 +24,8 @@ if __name__ == '__main__':
     ip = opts.ip
     port = opts.port
     
+    print("Connecting to robot on {}:{}".format(ip, port))
+
     ## play the game
     player = []
     

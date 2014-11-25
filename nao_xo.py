@@ -242,9 +242,9 @@ class NaoXO():
         self.img = self.getImage()
         ## find and merge lines
         self.lines = self.imgproc.mergeEndPoints(self.imgproc.preprocessLines(self.img), 0.05)
-	## if there are no lines, return false	
-	if not self.lines or not len(self.lines)==4:
-		return False
+        ## if there are no lines, return false	
+        if not self.lines or not len(self.lines)==4:
+            return False
         ## find and index intersections
         self.intersections = self.imgproc.getIndexedIntersections(self.lines)
         ## index lines
@@ -265,7 +265,7 @@ class NaoXO():
                 imgPoints[i,1]=self.intersections[i][1]
         ## object points are created by calling setFieldSize method and can be used for solving PnP
         self.rvec, self.tvec = cv2.solvePnP(self.objPoints, imgPoints, self.camMatrix, distCoeffs = None)
-        ## rotation matrix
+        ## rotation matrixause minions will die before the tower peaks and reset every minion. Unless the tower 
         R = cv2.cv.CreateMat(3,3,cv2.cv.CV_64FC1)
         ## convert rvec to R
         cv2.cv.Rodrigues2(cv2.cv.fromarray(self.rvec), R)
@@ -350,12 +350,11 @@ class NaoXO():
         Checks if game is over and what is the outcome
         '''
         
-	
         if pobjeda(self.board) == 'nerjeseno':
-	    ## return that the game is draw
+            ## return that the game is draw
             return 0
         if self.mode == 'x' and pobjeda(self.board) == 'pobjeda x':
-	    ## robot won
+            ## robot won
             return 1
         if self.mode == 'x' and pobjeda(self.board) == 'pobjeda o':
             ## opponent won
