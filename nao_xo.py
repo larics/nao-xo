@@ -242,9 +242,9 @@ class NaoXO():
         self.img = self.getImage()
         ## find and merge lines
         self.lines = self.imgproc.mergeEndPoints(self.imgproc.preprocessLines(self.img), 0.05)
-	## if there are no lines, return false	
-	if not self.lines or not len(self.lines)==4:
-		return False
+        ## if there are no lines, return false	
+        if not self.lines or not len(self.lines)==4:
+            return False
         ## find and index intersections
         self.intersections = self.imgproc.getIndexedIntersections(self.lines)
         ## index lines
@@ -350,12 +350,11 @@ class NaoXO():
         Checks if game is over and what is the outcome
         '''
         
-	
         if pobjeda(self.board) == 'nerjeseno':
-	    ## return that the game is draw
+            ## return that the game is draw
             return 0
         if self.mode == 'x' and pobjeda(self.board) == 'pobjeda x':
-	    ## robot won
+            ## robot won
             return 1
         if self.mode == 'x' and pobjeda(self.board) == 'pobjeda o':
             ## opponent won
@@ -498,14 +497,14 @@ class NaoXO():
         self.motion.closeHand(nameHand)
         self.motion.setStiffnesses(nameEffector, 1.0)
         
-        for i in range(5):
+        for _ in range(5):
             time.sleep(0.3)
             self.motion.wbSetEffectorControl(nameEffector, currPos[:3])
         
         ## extract goal position and move arm towards it
         goalPosition = [goalPos[0,0], goalPos[1,0], goalPos[2,0]+self.height, 0.0, 0.0, 0.0]
         
-        for i in range(5):
+        for _ in range(5):
             self.motion.wbSetEffectorControl(nameEffector, goalPosition[:3])
             time.sleep(0.3)
         
@@ -517,18 +516,18 @@ class NaoXO():
         ## obtain current postion and elevate the arm        
         currPos = self.motion.getPosition(nameEffector,2, True)
         currPos[2] = currPos[2]+0.1
-        for i in range(5):
+        for _ in range(5):
             self.motion.wbSetEffectorControl(nameEffector, currPos[:3])
             time.sleep(0.3)
         time.sleep(0.3)
         
         ## return to safe position
         if nameEffector == 'RArm':
-            for i in range(5):
+            for _ in range(5):
                 self.motion.wbSetEffectorControl(nameEffector, right_safe[:3])
                 time.sleep(0.3)
         else:
-            for i in range(5):
+            for _ in range(5):
                 self.motion.wbSetEffectorControl(nameEffector, left_safe[:3])
                 time.sleep(0.3)
         time.sleep(0.5)
@@ -601,7 +600,7 @@ class NaoXO():
                 while not self.findField():
                     print("[WARN ] Field not found")
                     self.drawstuff(False)
-                new_state, new_board = self.imgproc.getGameState(self.img, self.lines)
+                new_state, _ = self.imgproc.getGameState(self.img, self.lines)
                 
                 print("[INFO ] New state %s" % new_state)
                 print("[INFO ] Old state %s" % self.state)
@@ -668,9 +667,3 @@ class NaoXO():
         
         ## defualt return
         return False
-        
-        
-        
-        
-        
-        

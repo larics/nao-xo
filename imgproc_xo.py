@@ -52,11 +52,11 @@ class ImgProcessingXO():
         ## Extract edges
         edges = cv2.Canny(self.img_grayscale, self.lCanny, self.uCanny)
         ## Apply Hough transformation to obtain lines
-	try:
-		lines = cv2.HoughLines(edges, self.rhoRes, self.thetaRes, self.houghThreshold)[0]
-	except:
-		print("No lines found")
-		return []
+        try:
+            lines = cv2.HoughLines(edges, self.rhoRes, self.thetaRes, self.houghThreshold)[0]
+        except:
+            print("No lines found")
+            return []
         return lines
     
     def getEndPoints(self, lines):
@@ -159,9 +159,10 @@ class ImgProcessingXO():
         '''
         Merges end lines based on their endpoints in the image. If distance between endings of several lines is smaller than RelTol, lines will be merged
         '''
-	## check if there are lines
-	#if not lines:
-	#	return []
+        ## check if there are lines
+        #if not lines:
+        #	return []
+        
         ## calculate end points for lines
         pts1, pts2 = self.getEndPoints(lines)
         lines_merged = []
@@ -495,8 +496,8 @@ class ImgProcessingXO():
         TODO: remove hard coding of the thresholds
         '''
         ## segment the image, since crosses are red we need to segment twice
-        binaryImg1 = cv2.inRange(imgHSV, np.asarray(cv2.cv.Scalar(155, 60, 65)), np.asarray(cv2.cv.Scalar(180, 255, 255)))
-        binaryImg2 = cv2.inRange(imgHSV, np.asarray(cv2.cv.Scalar(0, 60, 65)), np.asarray(cv2.cv.Scalar(20, 255, 255)))
+        binaryImg1 = cv2.inRange(imgHSV, np.asarray(cv2.cv.Scalar(155, 40, 35)), np.asarray(cv2.cv.Scalar(180, 255, 255)))
+        binaryImg2 = cv2.inRange(imgHSV, np.asarray(cv2.cv.Scalar(0, 40, 35)), np.asarray(cv2.cv.Scalar(20, 255, 255)))
         ## add two binary images
         binaryImg = cv2.add(binaryImg1, binaryImg2)
         ## erode and dilate
@@ -639,4 +640,3 @@ class ImgProcessingXO():
         
         ## return the list containing the state of the game
         return state, board       
-    
