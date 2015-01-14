@@ -52,11 +52,11 @@ class ImgProcessingXO():
         ## Extract edges
         edges = cv2.Canny(self.img_grayscale, self.lCanny, self.uCanny)
         ## Apply Hough transformation to obtain lines
-	try:
-		lines = cv2.HoughLines(edges, self.rhoRes, self.thetaRes, self.houghThreshold)[0]
-	except:
-		print("No lines found")
-		return []
+        try:
+            lines = cv2.HoughLines(edges, self.rhoRes, self.thetaRes, self.houghThreshold)[0]
+        except:
+            print("No lines found")
+            return []
         return lines
     
     def getEndPoints(self, lines):
@@ -97,7 +97,7 @@ class ImgProcessingXO():
                         ## one point on the edge of the image found, search the other point
                         if y1>=0 and y1<=self.width:
                             ## line cannot intersect both x=0 and y=0 with negative b
-                            print("This should never happen")
+                            print("[WARN ]This should never happen")
                             ## TODO: should raise an error or be omitted
                             pts2.append((0, y1))
                         elif x2>=0 and x2<=self.height:
@@ -159,9 +159,7 @@ class ImgProcessingXO():
         '''
         Merges end lines based on their endpoints in the image. If distance between endings of several lines is smaller than RelTol, lines will be merged
         '''
-	## check if there are lines
-	#if not lines:
-	#	return []
+        
         ## calculate end points for lines
         pts1, pts2 = self.getEndPoints(lines)
         lines_merged = []

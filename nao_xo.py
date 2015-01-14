@@ -49,6 +49,8 @@ class NaoXO():
         self.behavior = ALProxy("ALBehaviorManager", IP, PORT)
         self.tts = ALProxy("ALTextToSpeech", IP, PORT)
         self.videoProxy = ALProxy("ALVideoDevice", IP, PORT)
+        self.awareness = ALProxy("ALBasicAwareness", IP, PORT)
+        self.posture = ALProxy("ALRobotPosture", IP, PORT)
         
         ## set video parameters
         ## select bottom camera
@@ -203,10 +205,14 @@ class NaoXO():
         '''
         Used to make robot stand and position itself correctly
         '''
+        ## Shutting down awareness
+        self.awareness.stopAwareness()
         
         ## Set stiffnesses, enableing robot to stand up.
         self.motion.setStiffnesses("Body", 1.0)
-        self.behavior.runBehavior("Stand up")
+        self.motion.setStiffnesses("LArm", 0.0)
+        self.motion.setStiffnesses("RArm", 0.0)
+        self.posture.goToPosture("StandInit", 0.5)
         ## Go to walk init pose
         self.motion.walkInit()
         self.torso_default = self.motion.getPosition("Torso", 2, True)
@@ -271,8 +277,7 @@ class NaoXO():
         ## convert rvec to R
         cv2.cv.Rodrigues2(cv2.cv.fromarray(self.rvec), R)
         
-        ## compose homogeneous transformation matrix
-        
+        ## compose homogeneous transformation matrix        
         Rt = np.zeros((3,4), dtype=np.float64)
         T = np.zeros((4,4), dtype = np.float64)
         T[3,3]=1.0
@@ -489,88 +494,57 @@ class NaoXO():
         self.motion.closeHand(nameHand)
         
         ## enable control of the arm
-        print("Enableing whole body motion")
+        print("[INFO ]Enableing whole body motion")
         self.motion.wbEnableEffectorControl(nameEffector, True)
         
         ## extract current position and elevate the hand
         currPos = self.motion.getPosition(nameEffector,2, True)
-        positions = []
-        times = []
-        currPos[0] = currPos[0]
-        currPos[2] = currPos[0]+0.15
+        currPos[0] += 0.03
+        currPos[2] += 0.15
         self.motion.closeHand(nameHand)
         self.motion.setStiffnesses(nameEffector, 1.0)
         
+        # lift the hand
+        print("[INFO ]Lifting the hand")
+        self.motion.positionInterpolations(nameEffector, 2, currPos, 7, 3)
         
-        positions.append(currPos)
-        times.append(1)
-#        print("Lifting hand")
-#        for i in range(5):
-#            print("%s of 5" % i )
-#            time.sleep(0.3)
-#            self.motion.wbSetEffectorControl(nameEffector, currPos[:3])
-#        print("Waiting")
-#        time.sleep(10.5)
+        print("[INFO ]Changing orientation")
+        if nameEffector == "RArm":
+            currPos[3] = 1.57
+        else:
+            currPos[3] = -1.57
         
-        print("Changing orientation")
-        currPos[3:6] = [0.0]*3
-        positions.append(currPos)
-        times.append(3)
-        
+        self.motion.positionInterpolations(nameEffector, 2, currPos, 56, 3)
+                
         ## extract goal position and move arm towards it
-        goalPosition = [goalPos[0,0], goalPos[1,0], goalPos[2,0]+self.height/2.0, 0.0, 0.0, 0.0]
-        
-        positions.append(goalPosition)
-        times.append(7)        
-        self.motion.positionInterpolations(nameEffector, 2, positions, 63, times)
-        
-        
-    
-    
-#        for _ in range(5):
-#            self.motion.wbSetEffectorControl(nameEffector, goalPosition[:3])
-#            time.sleep(0.3)
-#        time.sleep(0.5)
-#        self.motion.positionInterpolations(nameEffector, 2, goalPosition, 56, 3)
+        goalPosition = [goalPos[0,0], goalPos[1,0], goalPos[2,0]+self.height, 0.0, 0.0, 0.0]
+        print("[INFO ]Going to goal position")
+        self.motion.positionInterpolations(nameEffector, 2, goalPosition, 7, 3)
         
         ## open hand to release the object
         time.sleep(0.5)
         self.motion.openHand(nameHand)
         time.sleep(0.5)
         
-        positions = []
-        times = []
+        
         ## obtain current postion and elevate the arm        
         currPos = self.motion.getPosition(nameEffector,2, True)
-        currPos[2] = currPos[2]+0.15
-        positions.append(currPos)
-        times.append(2)
-#        for _ in range(5):
-#            self.motion.wbSetEffectorControl(nameEffector, currPos[:3])
-#            time.sleep(0.3)
-#        self.motion.setPositions(nameEffector, 2, currPos, 0.5, 63)
-#        time.sleep(0.3)
+        currPos[2] += 0.15
+        
+        # lift the hand
+        print("[INFO ]Lifting the hand")
+        self.motion.positionInterpolations(nameEffector, 2, currPos, 7, 3)
         
         ## return to safe position
         if nameEffector == 'RArm':
-#            time.sleep(0.3)
-#            for _ in range(5):
-#                self.motion.wbSetEffectorControl(nameEffector, right_safe[:3])
-#                time.sleep(0.3)
-            positions.append(right_safe)
-            times.append(6)
+            self.motion.positionInterpolations([nameEffector, "Torso"], 2, [right_safe_1, torso_safe], 63, [5,4])
         else:
-#            self.motion.setPositions(nameEffector, 2, right_safe, 0.5, 63)
-#            time.sleep(0.3)
-#            for _ in range(5):
-#                self.motion.wbSetEffectorControl(nameEffector, left_safe[:3])
-#                time.sleep(0.3)
-            positions.append(left_safe)
-            times.append(6)
+            self.motion.positionInterpolations([nameEffector, "Torso"], 2, [left_safe_1, torso_safe], 63, [5,4])
+
         time.sleep(0.5)
-        self.motion.positionInterpolations([nameEffector, "Torso"], 2, [positions, self.torso_default], 63, [times, times[-1]])
         ## disable whole body control
-        #self.motion.wbEnableEffectorControl(nameEffector, False)
+        print("[INFO ]Disableing whole body motion")
+        self.motion.wbEnableEffectorControl(nameEffector, False)
         ## put hands in specific position, useful for easier object placement
         ## TODO: remove hard coding
         if nameEffector == 'RArm':
@@ -586,7 +560,6 @@ class NaoXO():
         self.motion.closeHand(nameHand)
         self.motion.setStiffnesses("RArm", 0.0)
         self.motion.setStiffnesses("LArm", 0.0)
-        
         ## move was executed, exit 
         return
 
