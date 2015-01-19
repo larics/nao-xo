@@ -498,7 +498,7 @@ class NaoXO():
         self.motion.setStiffnesses(nameEffector, 1.0)
         
         for _ in range(5):
-            time.sleep(0.3)
+            time.sleep(0.2)
             self.motion.wbSetEffectorControl(nameEffector, currPos[:3])
         
         ## extract goal position and move arm towards it
