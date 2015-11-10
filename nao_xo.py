@@ -226,7 +226,7 @@ class NaoXO():
         
         ## initialize manipulation
         ## TODO: remove hard coding of the goal position height clearance
-        self.manipulationInit(0.05)
+        self.manipulationInit(0.03)
         
         print("[INFO ] Robot pose initialized")
         
@@ -520,8 +520,8 @@ class NaoXO():
         
         ## extract current position and elevate the hand
         currPos = self.motion.getPosition(nameEffector,2, True)
-        currPos[0] += 0.03
-        currPos[2] += 0.15
+        currPos[0] += 0.01
+        currPos[2] += 0.05
         self.motion.closeHand(nameHand)
         self.motion.setStiffnesses(nameEffector, 1.0)
         
@@ -531,16 +531,22 @@ class NaoXO():
         
         print("[INFO ]Changing orientation")
         if nameEffector == "RArm":
-            currPos[3] = 1.57
+            currPos[3] = 0
+            currPos[4] = 0
         else:
-            currPos[3] = -1.57
+            currPos[3] = 0
+            currPos[4] = 0
         
         self.motion.positionInterpolations(nameEffector, 2, currPos, 56, 3)
                 
         ## extract goal position and move arm towards it
-        goalPosition = [goalPos[0,0], goalPos[1,0], goalPos[2,0]+self.height, 0.0, 0.0, 0.0]
+        goalPosition = [goalPos[0,0], goalPos[1,0], goalPos[2,0]+self.height+0.01, 0.0, 0.0, 0.0]
         print("[INFO ]Going to goal position")
         self.motion.positionInterpolations(nameEffector, 2, goalPosition, 7, 3)
+        goalPosition[3]=0
+        goalPosition[4]=0
+        goalPosition[2]-=0.01
+        self.motion.positionInterpolations(nameEffector, 2, goalPosition, 63, 1)
         
         ## open hand to release the object
         time.sleep(0.5)
@@ -550,7 +556,8 @@ class NaoXO():
         
         ## obtain current postion and elevate the arm        
         currPos = self.motion.getPosition(nameEffector,2, True)
-        currPos[2] += 0.15
+        currPos[2] += 0.05
+        currPos[0] -= 0.01
         
         # lift the hand
         print("[INFO ]Lifting the hand")
