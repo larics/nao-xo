@@ -22,7 +22,7 @@ if __name__ == '__main__':
     
     ## parse input arguments
     parser = OptionParser()
-    parser.add_option("-i", "--ip", help="Robot IP", dest="ip", default="161.53.68.42")
+    parser.add_option("-i", "--ip", help="Robot IP", dest="ip", default="edith.local")
     parser.add_option("-p", "--port", help="Port to connect to NaoQi", dest="port", type="int", default=9559)
     (opts, args_) = parser.parse_args()
     ip = opts.ip
@@ -59,7 +59,6 @@ if __name__ == '__main__':
         player.cleanup()
         player=[]
         sys.exit()
-        
     ## catch all errors        
     except:
         ## if player was created, do cleanup

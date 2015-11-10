@@ -202,7 +202,7 @@ class ImgProcessingXO():
                     rho_m = float(pt1[1] + pt2[1]) / 2
                 else:
                     ## line is neither horizontal nor vertical, calculate rho
-                    rho_m = sin(theta_m) * (pt1[1] * pt2 [0] - pt1[0] * pt2[1]) / (pt2[0] - pt1[0])
+                    rho_m = sin(theta_m) * (pt1[1] * pt2 [0] - pt1[0] * pt2[1]) / (pt2[0] - pt1[0]+1e-9)
                 ## add new line to the list of merged lines
                 lines_merged.append((rho_m, theta_m))
                 ## flag line i as processed

@@ -645,6 +645,8 @@ class NaoXO():
         old_state = ''
         while True:
             fieldFound = self.findField()
+            if fieldFound:
+                print("Field found")
             self.drawstuff(fieldFound)
             ## update the state of the game
             old_state = self.state
