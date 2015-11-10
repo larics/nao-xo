@@ -644,6 +644,8 @@ class NaoXO():
         ## wait for the front tactile sensor to be touched
         while True:
             fieldFound = self.findField()
+            if fieldFound:
+                print("Field found")
             self.drawstuff(fieldFound)
             ## update the state of the game
             self.state, self.board = self.imgproc.getGameState(self.img, self.lines)
