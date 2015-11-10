@@ -663,14 +663,17 @@ class NaoXO():
         Returns false if there are too many objects on the playing field
         '''
         ## wait for the front tactile sensor to be touched
+        old_state = ''
         while True:
             fieldFound = self.findField()
             if fieldFound:
                 print("Field found")
             self.drawstuff(fieldFound)
             ## update the state of the game
+            old_state = self.state
             self.state, self.board = self.imgproc.getGameState(self.img, self.lines)
-            print("[INFO ] Game state %s" % (self.state))
+            if old_state != self.state:
+                print("[INFO ] Game state %s" % (self.state))
             if fieldFound and self.memory.getData("FrontTactilTouched"):
                 break
                 
