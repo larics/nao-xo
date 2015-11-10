@@ -271,7 +271,7 @@ class NaoXO():
                 imgPoints[i,0]=self.intersections[i][0]
                 imgPoints[i,1]=self.intersections[i][1]
         ## object points are created by calling setFieldSize method and can be used for solving PnP
-        self.rvec, self.tvec = cv2.solvePnP(self.objPoints, imgPoints, self.camMatrix, distCoeffs = None)
+        _, self.rvec, self.tvec = cv2.solvePnP(self.objPoints, imgPoints, self.camMatrix, distCoeffs = None)
         ## rotation matrixause minions will die before the tower peaks and reset every minion. Unless the tower 
         R = cv2.cv.CreateMat(3,3,cv2.cv.CV_64FC1)
         ## convert rvec to R
@@ -326,6 +326,24 @@ class NaoXO():
         
         ## close all OpenCV windows
         cv2.destroyAllWindows()
+
+    def draw_board(self, state):
+        '''
+        Draw state on the image
+        '''
+        state_image = np.ones((300,300,3), np.uint8)
+        state_image[:]=(255,255,255)
+        cv2.line(state_image, (0,100), (300,100), (0,0,0),3,8)
+        cv2.line(state_image, (0,200), (300,200), (0,0,0),3,8)
+        cv2.line(state_image, (100,0), (100,300), (0,0,0),3,8)
+        cv2.line(state_image, (200,0), (200,300), (0,0,0),3,8)
+        boxes = [(30,65),(130,65),(230,65),(30,165),(130,165),(230,165),(30,265), (130,265), (230,265)]
+        for i in range(9):
+            if state[i]=='x':
+                cv2.putText(state_image,state[i],boxes[i],cv2.cv.CV_FONT_HERSHEY_SIMPLEX,2,(0,0,255), 3,8)
+            if state[i]=='o':
+                cv2.putText(state_image,state[i],boxes[i],cv2.cv.CV_FONT_HERSHEY_SIMPLEX,2,(0,255,255), 3,8)
+        return state_image
     
     def drawstuff(self, flag):
         '''
@@ -334,6 +352,7 @@ class NaoXO():
         
         ## open new window
         cv2.namedWindow("Image")
+        cv2.namedWindow("Game")
 
         ## if flag is set to false, just show the original image
         ## else draw valid intersections and bound of th eplaying field
@@ -347,7 +366,9 @@ class NaoXO():
                 cv2.circle(self.img, point, 5, (255,0,0), cv2.cv.CV_FILLED)
         
         ## show image
+        state_image = self.draw_board(self.state)
         cv2.imshow("Image", self.img)
+        cv2.imshow("Game", state_image)
         ## imshow does not work without wait key method
         cv2.waitKey(1)
         
