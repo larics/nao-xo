@@ -554,7 +554,7 @@ class NaoXO():
         ## extract current position and elevate the hand
         currPos = self.motion.getPosition(nameEffector,2, True)
         currPos[0] += 0.00
-        currPos[2] += 0.03
+        currPos[2] += 0.06
         self.motion.closeHand(nameHand)
         self.motion.setStiffnesses(nameEffector, 1.0)
         
@@ -562,8 +562,8 @@ class NaoXO():
         print("[INFO ]Lifting the hand")
         self.motion.positionInterpolations(nameEffector, 2, currPos, 7, 3)
         ## extract goal position and move arm towards it
-        goalPosition = [goalPos[0,0], goalPos[1,0], goalPos[2,0]+self.height+0.03, 0.0, 0.0, 0.0]
-        midPoint = [(goalPosition[0]+currPos[0])/2, (goalPosition[1]+currPos[1])/2, goalPosition[2], 0, 0, currPos[5]]
+        goalPosition = [goalPos[0,0], goalPos[1,0], goalPos[2,0]+self.height+0.08, 0.0, 0.0, 0.0]
+        midPoint = [(goalPosition[0]+currPos[0])/2, (goalPosition[1]+currPos[1])/2, goalPosition[2], currPos[3], currPos[4], currPos[5]]
         print("[INFO ]Moving to midpoint")
         self.motion.positionInterpolations(nameEffector, 2, midPoint, 7, 3)
 
@@ -571,9 +571,10 @@ class NaoXO():
         self.motion.positionInterpolations(nameEffector, 2, goalPosition, 7, 3)
         goalPosition[3]=0
         goalPosition[4]=0
-        goalPosition[2]-=0.03
-        self.motion.positionInterpolations(nameEffector, 2, goalPosition, 63, 1)
-        
+
+        self.motion.positionInterpolations(nameEffector, 2, goalPosition, 7, 3)
+        goalPosition[2]-=0.08
+        self.motion.positionInterpolations(nameEffector, 2, goalPosition, 63, 3)
         ## open hand to release the object
         time.sleep(0.5)
         self.motion.openHand(nameHand)
@@ -600,14 +601,6 @@ class NaoXO():
         self.motion.wbEnableEffectorControl(nameEffector, False)
         ## put hands in specific position, useful for easier object placement
         ## TODO: remove hard coding
-        if nameEffector == 'RArm':
-            angles = self.motion.getAngles("RArm", True)
-            angles[4]=1.5385600328445435
-            self.motion.setAngles('RArm', angles, 0.5)
-        else:
-            angles = self.motion.getAngles("LArm", True)
-            angles[4]=-1.4496722221374512
-            self.motion.setAngles('LArm', angles, 0.5)
         time.sleep(1)
         ## close hand and release stiffnesses
         self.motion.closeHand(nameHand)
