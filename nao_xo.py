@@ -611,7 +611,7 @@ class NaoXO():
         
         ## if the game is over, check which outcome happened and exit
         if res==2:
-            self.tts.say("Looks like you beat me. Congratulations")
+            self.behavior.runBehavior('xo_animations-8894e3/loose_humility')
             return False
         elif res==0:
             self.tts.say("Looks like a draw. Congratulations")
@@ -650,7 +650,7 @@ class NaoXO():
                 self.tts.say("Looks like a draw")
                 return False
             else:
-                self.tts.say("I win, I win, I win, ha ha ha ha ha ha")
+                self.behavior.runBehavior('xo_animations-8894e3/win_celebration')
                 return False
           
         ## return
