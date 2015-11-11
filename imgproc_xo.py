@@ -40,6 +40,35 @@ class ImgProcessingXO():
         self.thetaRes = 1.0*theta/thetaDiv
         ## threshold for accumulator value to be classified as line
         self.houghThreshold = houghThresh
+
+    def draw_lines(self, image, lines):
+        if len(lines[0])==2:
+            for rho, theta in lines:
+                a = np.cos(theta)
+                b = np.sin(theta)
+                x0 = a*rho
+                y0 = b*rho
+                x1 = int(x0 + 1000*(-b))
+                y1 = int(y0 + 1000*(a))
+                x2 = int(x0 - 1000*(-b))
+                y2 = int(y0 - 1000*(a))
+                cv2.line(image,(x1,y1),(x2,y2),(0,0,255),2)
+            return image
+        elif len(lines[0])==4:
+            for _, _, rho, theta in lines:
+                a = np.cos(theta)
+                b = np.sin(theta)
+                x0 = a*rho
+                y0 = b*rho
+                x1 = int(x0 + 1000*(-b))
+                y1 = int(y0 + 1000*(a))
+                x2 = int(x0 - 1000*(-b))
+                y2 = int(y0 - 1000*(a))
+                cv2.line(image,(x1,y1),(x2,y2),(0,0,255),2)
+            return image
+
+        return image
+
         
     def preprocessLines(self, image):
         '''
@@ -49,11 +78,17 @@ class ImgProcessingXO():
         '''
         ## Convert to grayscale
         self.img_grayscale = cv2.cvtColor(image,cv2.cv.CV_BGR2GRAY)
+        cv2.imshow("Graycale", self.img_grayscale)
         ## Extract edges
         edges = cv2.Canny(self.img_grayscale, self.lCanny, self.uCanny)
+        cv2.imshow("Edges", edges)
+        cv2.waitKey(1)
         ## Apply Hough transformation to obtain lines
         try:
             lines = cv2.HoughLines(edges, self.rhoRes, self.thetaRes, self.houghThreshold)[0]
+            lines_image = self.draw_lines(image.copy(), lines)
+            cv2.imshow("Lines", lines_image)
+            cv2.waitKey(1)
         except:
             print("No lines found")
             return []
