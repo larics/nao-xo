@@ -550,7 +550,7 @@ class NaoXO():
         print("[INFO ]Lifting the hand")
         self.motion.positionInterpolations(nameEffector, 2, currPos, 7, 3)
         ## extract goal position and move arm towards it
-        goalPosition = [goalPos[0,0], goalPos[1,0], goalPos[2,0]+self.height+0.01, 0.0, 0.0, 0.0]
+        goalPosition = [goalPos[0,0], goalPos[1,0], goalPos[2,0]+self.height+0.03, 0.0, 0.0, 0.0]
         midPoint = [(goalPosition[0]+currPos[0])/2, (goalPosition[1]+currPos[1])/2, goalPosition[2], 0, 0, currPos[5]]
         print("[INFO ]Moving to midpoint")
         self.motion.positionInterpolations(nameEffector, 2, midPoint, 7, 3)
@@ -559,7 +559,7 @@ class NaoXO():
         self.motion.positionInterpolations(nameEffector, 2, goalPosition, 7, 3)
         goalPosition[3]=0
         goalPosition[4]=0
-        goalPosition[2]-=0.01
+        goalPosition[2]-=0.03
         self.motion.positionInterpolations(nameEffector, 2, goalPosition, 63, 1)
         
         ## open hand to release the object
