@@ -260,6 +260,13 @@ class NaoXO():
         self.states[0] = state
         if self.checkStates():
             self.state = state
+
+    def draw_intersections(self, image, intersections):
+        if not intersections:
+            return image
+        for intersection in intersections:
+            cv2.circle(image, intersection, 3,(255,0,0), -1, 8)
+        return image
     
     def findField(self):
         '''
@@ -287,7 +294,9 @@ class NaoXO():
         if not len(self.intersections)==4:
             #print("Wrong number of intersections %s" % len(self.intersections))
             return False
-        
+        image_intersections = self.draw_intersections(self.img.copy(), self.intersections)
+        cv2.imshow("Intersections", image_intersections)
+        cv2.waitKey(1)
         ## otherwise, calculate position by using solvePnP from OpenCV
         ## create image points from intersections
         imgPoints = np.zeros((4,2), dtype=np.float64)
