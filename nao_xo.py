@@ -678,9 +678,6 @@ class NaoXO():
             else:
                 self.tts.say("I win, I win, I win, ha ha ha ha ha ha")
                 return False
-          
-        ## return
-        return True
     
     def gameInit(self):
         '''
