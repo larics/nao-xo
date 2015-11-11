@@ -640,7 +640,7 @@ class NaoXO():
             self.behavior.runBehavior('xo_animations-8894e3/loose_humility')
             return False
         elif res==0:
-            self.tts.say("Looks like a draw. Congratulations")
+            self.behavior.runBehavior('xo_animations-8894e3/draw_defensive')
             return False
         
         ## if the game is not over, calculate next move
@@ -652,6 +652,7 @@ class NaoXO():
         ## check if robot wins or the game is draw
         if self.checkResult() < 0:
             ## if the game is not over, wait for the opponent to play
+            wait_count = 0
             while True:
                 time.sleep(2)
                 while not self.findField():
@@ -665,15 +666,17 @@ class NaoXO():
                 if self.checkValidity(new_state, self.state, self.mode):
                     ## if it is valid, robot needs to play its move
                     break
-                else:
+                elif wait_count == 5:
                     ## if the state is not valid, robot waits
                     self.tts.say("I am waiting for you to play")
+                wait_count += 1
             ## if the loop was broken, the game continues
+            
             return True
         else:
             ## game is over, check the result, say appropriate phrase and return false to indicate that the game is over
             if self.checkResult() == 0:
-                self.tts.say("Looks like a draw")
+                self.behavior.runBehavior('xo_animations-8894e3/draw_defensive')
                 return False
             else:
                 self.behavior.runBehavior('xo_animations-8894e3/win_celebration')
