@@ -271,7 +271,8 @@ class NaoXO():
         ## find and merge lines
         self.lines = self.imgproc.mergeEndPoints(self.imgproc.preprocessLines(self.img), 0.05)
         ## if there are no lines, return false	
-        if not self.lines or not len(self.lines)==4:
+        if not self.lines: # or not len(self.lines)==4:
+            #print("No lines %s" % len(self.lines))
             return False
         ## find and index intersections
         self.intersections = self.imgproc.getIndexedIntersections(self.lines)
@@ -281,8 +282,10 @@ class NaoXO():
         self.T_field = np.zeros((4,4), dtype=np.float64)
         ## if there are not exactly four intersections return false
         if not self.intersections:
+            #print("No intersections")
             return False
         if not len(self.intersections)==4:
+            #print("Wrong number of intersections %s" % len(self.intersections))
             return False
         
         ## otherwise, calculate position by using solvePnP from OpenCV
