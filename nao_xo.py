@@ -549,19 +549,12 @@ class NaoXO():
         # lift the hand
         print("[INFO ]Lifting the hand")
         self.motion.positionInterpolations(nameEffector, 2, currPos, 7, 3)
-        
-        print("[INFO ]Changing orientation")
-        if nameEffector == "RArm":
-            currPos[3] = 0
-            currPos[4] = 0
-        else:
-            currPos[3] = 0
-            currPos[4] = 0
-        
-        self.motion.positionInterpolations(nameEffector, 2, currPos, 56, 3)
-                
         ## extract goal position and move arm towards it
         goalPosition = [goalPos[0,0], goalPos[1,0], goalPos[2,0]+self.height+0.01, 0.0, 0.0, 0.0]
+        midPoint = [(goalPosition[0]+currPos[0])/2, (goalPosition[1]+currPos[1])/2, goalPosition[2], 0, 0, currPos[5]]
+        print("[INFO ]Moving to midpoint")
+        self.motion.positionInterpolations(nameEffector, 2, midPoint, 7, 3)
+
         print("[INFO ]Going to goal position")
         self.motion.positionInterpolations(nameEffector, 2, goalPosition, 7, 3)
         goalPosition[3]=0
@@ -583,8 +576,6 @@ class NaoXO():
         # lift the hand
         print("[INFO ]Lifting the hand")
         self.motion.positionInterpolations(nameEffector, 2, currPos, 7, 3)
-        ## Go to walk init pose
-        self.motion.walkInit()
         ## return to safe position
         if nameEffector == 'RArm':
             self.motion.positionInterpolations([nameEffector, "Torso"], 2, [right_safe_1, torso_safe], 63, [5,4])
