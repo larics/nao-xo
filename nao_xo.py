@@ -574,7 +574,7 @@ class NaoXO():
 
         self.motion.positionInterpolations(nameEffector, 2, goalPosition, 7, 3)
         goalPosition[2]-=0.08
-        self.motion.positionInterpolations(nameEffector, 2, goalPosition, 63, 3)
+        self.motion.positionInterpolations(nameEffector, 2, goalPosition, 7, 3)
         ## open hand to release the object
         time.sleep(0.5)
         self.motion.openHand(nameHand)
