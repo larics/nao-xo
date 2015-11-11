@@ -66,6 +66,7 @@ class NaoXO():
         print("[INFO ] Image processing initialized")
         ## state of the game
         self.state = [0]*9
+        self.states = [[0]*9, [0]*9, [0]*9]
         self.board = [[-1,-1,-1],[-1,-1,-1],[-1,-1,-1]]
         self.mode = 'x'
         
@@ -127,39 +128,39 @@ class NaoXO():
         self.fieldPoints = np.zeros((4,9), dtype=np.float64)
         
         self.fieldPoints[0,0] = -d2     ## first box = top left
-        self.fieldPoints[1,0] =  d2
+        self.fieldPoints[1,0] =  d2+0.005
         self.fieldPoints[3,0] =  1
         
         self.fieldPoints[0,1] = 0.0     ## second box = top middle
-        self.fieldPoints[1,1] = d2
+        self.fieldPoints[1,1] = d2+0.005
         self.fieldPoints[3,1] = 1
         
         self.fieldPoints[0,2] = d2      ## third box = top right
-        self.fieldPoints[1,2] = d2
+        self.fieldPoints[1,2] = d2+0.005
         self.fieldPoints[3,2] = 1
         
         self.fieldPoints[0,3] = -d2     ## fourth box = middle left
-        self.fieldPoints[1,3] = 0.0
+        self.fieldPoints[1,3] = 0.0-0.005
         self.fieldPoints[3,3] = 1
         
         self.fieldPoints[0,4] = 0.0     ## fifth box = middle
-        self.fieldPoints[1,4] = 0.0
+        self.fieldPoints[1,4] = 0.0-0.005
         self.fieldPoints[3,4] = 1
         
         self.fieldPoints[0,5] = d2      ## sixth box = middle right
-        self.fieldPoints[1,5] = 0.0
+        self.fieldPoints[1,5] = 0.0-0.005
         self.fieldPoints[3,5] = 1
         
         self.fieldPoints[0,6] = -d2     ## seventh box = bottom left
-        self.fieldPoints[1,6] = -d2
+        self.fieldPoints[1,6] = -d2-0.005
         self.fieldPoints[3,6] = 1
         
         self.fieldPoints[0,7] = 0.0     ## eeighth box = bottom middle
-        self.fieldPoints[1,7] = -d2
+        self.fieldPoints[1,7] = -d2-0.005
         self.fieldPoints[3,7] = 1
         
         self.fieldPoints[0,8] =  d2     ## ninth box = bottom right
-        self.fieldPoints[1,8] = -d2
+        self.fieldPoints[1,8] = -d2-0.005
         self.fieldPoints[3,8] = 1
         
         ## set cornerPoints
@@ -226,7 +227,7 @@ class NaoXO():
         
         ## initialize manipulation
         ## TODO: remove hard coding of the goal position height clearance
-        self.manipulationInit(0.05)
+        self.manipulationInit(0.025)
         
         print("[INFO ] Robot pose initialized")
         
@@ -239,6 +240,26 @@ class NaoXO():
         cv2.cv.SetData(self.imgheader, alimg[6])
         self.img = np.asarray(self.imgheader[:,:])
         return self.img
+
+    def checkStates(self):
+        '''
+        Check if all states are the same
+        '''
+        for i in range(len(self.states)-1):
+            for j in range(len(self.states[i])):
+                if not self.states[i][j] == self.states[i+1][j]:
+                    return False
+        return True
+
+    def updateState(self, state):
+        '''
+        Update state
+        '''
+        for i in range(len(self.states)-1, 1, -1):
+            self.states[i] = self.states[i-1]
+        self.states[0] = state
+        if self.checkStates():
+            self.state = state
     
     def findField(self):
         '''
@@ -250,7 +271,8 @@ class NaoXO():
         ## find and merge lines
         self.lines = self.imgproc.mergeEndPoints(self.imgproc.preprocessLines(self.img), 0.05)
         ## if there are no lines, return false	
-        if not self.lines or not len(self.lines)==4:
+        if not self.lines: # or not len(self.lines)==4:
+            #print("No lines %s" % len(self.lines))
             return False
         ## find and index intersections
         self.intersections = self.imgproc.getIndexedIntersections(self.lines)
@@ -260,8 +282,10 @@ class NaoXO():
         self.T_field = np.zeros((4,4), dtype=np.float64)
         ## if there are not exactly four intersections return false
         if not self.intersections:
+            #print("No intersections")
             return False
         if not len(self.intersections)==4:
+            #print("Wrong number of intersections %s" % len(self.intersections))
             return False
         
         ## otherwise, calculate position by using solvePnP from OpenCV
@@ -520,27 +544,26 @@ class NaoXO():
         
         ## extract current position and elevate the hand
         currPos = self.motion.getPosition(nameEffector,2, True)
-        currPos[0] += 0.03
-        currPos[2] += 0.15
+        currPos[0] += 0.00
+        currPos[2] += 0.03
         self.motion.closeHand(nameHand)
         self.motion.setStiffnesses(nameEffector, 1.0)
         
         # lift the hand
         print("[INFO ]Lifting the hand")
         self.motion.positionInterpolations(nameEffector, 2, currPos, 7, 3)
-        
-        print("[INFO ]Changing orientation")
-        if nameEffector == "RArm":
-            currPos[3] = 1.57
-        else:
-            currPos[3] = -1.57
-        
-        self.motion.positionInterpolations(nameEffector, 2, currPos, 56, 3)
-                
         ## extract goal position and move arm towards it
-        goalPosition = [goalPos[0,0], goalPos[1,0], goalPos[2,0]+self.height, 0.0, 0.0, 0.0]
+        goalPosition = [goalPos[0,0], goalPos[1,0], goalPos[2,0]+self.height+0.03, 0.0, 0.0, 0.0]
+        midPoint = [(goalPosition[0]+currPos[0])/2, (goalPosition[1]+currPos[1])/2, goalPosition[2], 0, 0, currPos[5]]
+        print("[INFO ]Moving to midpoint")
+        self.motion.positionInterpolations(nameEffector, 2, midPoint, 7, 3)
+
         print("[INFO ]Going to goal position")
         self.motion.positionInterpolations(nameEffector, 2, goalPosition, 7, 3)
+        goalPosition[3]=0
+        goalPosition[4]=0
+        goalPosition[2]-=0.03
+        self.motion.positionInterpolations(nameEffector, 2, goalPosition, 63, 1)
         
         ## open hand to release the object
         time.sleep(0.5)
@@ -550,12 +573,12 @@ class NaoXO():
         
         ## obtain current postion and elevate the arm        
         currPos = self.motion.getPosition(nameEffector,2, True)
-        currPos[2] += 0.15
+        currPos[2] += 0.05
+        currPos[0] -= 0.01
         
         # lift the hand
         print("[INFO ]Lifting the hand")
         self.motion.positionInterpolations(nameEffector, 2, currPos, 7, 3)
-        
         ## return to safe position
         if nameEffector == 'RArm':
             self.motion.positionInterpolations([nameEffector, "Torso"], 2, [right_safe_1, torso_safe], 63, [5,4])
@@ -564,7 +587,7 @@ class NaoXO():
 
         time.sleep(0.5)
         ## disable whole body control
-        print("[INFO ]Disableing whole body motion")
+        print("[INFO ]Disabling whole body motion")
         self.motion.wbEnableEffectorControl(nameEffector, False)
         ## put hands in specific position, useful for easier object placement
         ## TODO: remove hard coding
@@ -581,6 +604,7 @@ class NaoXO():
         self.motion.closeHand(nameHand)
         self.motion.setStiffnesses("RArm", 0.0)
         self.motion.setStiffnesses("LArm", 0.0)
+
         ## move was executed, exit 
         return
 
@@ -629,7 +653,7 @@ class NaoXO():
             while True:
                 time.sleep(2)
                 while not self.findField():
-                    print("[WARN ] Field not found")
+                    #print("[WARN ] Field not found")
                     self.drawstuff(False)
                 new_state, _ = self.imgproc.getGameState(self.img, self.lines)
                 

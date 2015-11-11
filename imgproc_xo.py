@@ -246,15 +246,13 @@ class ImgProcessingXO():
         '''
         ## create bins by dividig the circle (360 degrees) with the resolution. Each bin will be checked if it contains the black ray
         bin_rays = [0]*(360/res)
-        x = 0
-        y = 0
         ## for each ray/bin denoted by its relative angle
         for bin_ray in range(360/res):
             ## check only inside the circle with given radius
-            for rho in range(1, radius):
+            for rho in range(radius/5, radius):
                 ## calculate point on the ray
-                x = cos(res*bin_ray*3.1415926/180.0) * rho;
-                y = sin(res*bin_ray*3.1415926/180.0) * rho;
+                x = cos(res*bin_ray*3.1415926/180.0) * rho
+                y = sin(res*bin_ray*3.1415926/180.0) * rho
                 x = int(x + intersection[0])
                 y = y + int(intersection[1])
                 ## if the point on the ray is in the image
@@ -277,7 +275,7 @@ class ImgProcessingXO():
         ## one-dimensional connected components clustering to merge the rays
         labels = [0]*360
         ## counting how many clusters there are, count value will also be label for each cluster
-        count = 0;
+        count = 0
         ## for all bins
         for i in range(2*360/res):
             ## in worst case we have to pass all rays twice, due to problem being circular
