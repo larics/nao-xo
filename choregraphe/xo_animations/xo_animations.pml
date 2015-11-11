@@ -4,6 +4,7 @@
     <BehaviorDescriptions>
         <BehaviorDescription name="behavior" src="win_celebration" xar="behavior.xar" />
         <BehaviorDescription name="behavior" src="loose_humility" xar="behavior.xar" />
+        <BehaviorDescription name="behavior" src="draw_defensive" xar="behavior.xar" />
     </BehaviorDescriptions>
     <Dialogs />
     <Resources />
