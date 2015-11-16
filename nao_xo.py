@@ -508,6 +508,9 @@ class NaoXO():
         if self.goal == 0 or self.goal == 3 or self.goal == 6:
             nameEffector = 'LArm'
             nameHand = 'LHand'
+            self.behavior.runBehavior('xo_animations-8894e3/request_token_left')
+        else:
+            self.behavior.runBehavior('xo_animations-8894e3/request_token_right')
         print("[INFO ] Using %s" % nameHand)
         
         ## Update the state of the game
