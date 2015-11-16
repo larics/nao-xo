@@ -49,6 +49,8 @@ class NaoXO():
         self.behavior = ALProxy("ALBehaviorManager", IP, PORT)
         self.tts = ALProxy("ALTextToSpeech", IP, PORT)
         self.videoProxy = ALProxy("ALVideoDevice", IP, PORT)
+        self.awareness = ALProxy("ALBasicAwareness", IP, PORT)
+        self.posture = ALProxy("ALRobotPosture", IP, PORT)
         
         ## set video parameters
         ## select bottom camera
@@ -64,6 +66,7 @@ class NaoXO():
         print("[INFO ] Image processing initialized")
         ## state of the game
         self.state = [0]*9
+        self.states = [[0]*9, [0]*9, [0]*9]
         self.board = [[-1,-1,-1],[-1,-1,-1],[-1,-1,-1]]
         self.mode = 'x'
         
@@ -125,39 +128,39 @@ class NaoXO():
         self.fieldPoints = np.zeros((4,9), dtype=np.float64)
         
         self.fieldPoints[0,0] = -d2     ## first box = top left
-        self.fieldPoints[1,0] =  d2
+        self.fieldPoints[1,0] =  d2+0.005
         self.fieldPoints[3,0] =  1
         
         self.fieldPoints[0,1] = 0.0     ## second box = top middle
-        self.fieldPoints[1,1] = d2
+        self.fieldPoints[1,1] = d2+0.005
         self.fieldPoints[3,1] = 1
         
         self.fieldPoints[0,2] = d2      ## third box = top right
-        self.fieldPoints[1,2] = d2
+        self.fieldPoints[1,2] = d2+0.005
         self.fieldPoints[3,2] = 1
         
         self.fieldPoints[0,3] = -d2     ## fourth box = middle left
-        self.fieldPoints[1,3] = 0.0
+        self.fieldPoints[1,3] = 0.0-0.005
         self.fieldPoints[3,3] = 1
         
         self.fieldPoints[0,4] = 0.0     ## fifth box = middle
-        self.fieldPoints[1,4] = 0.0
+        self.fieldPoints[1,4] = 0.0-0.005
         self.fieldPoints[3,4] = 1
         
         self.fieldPoints[0,5] = d2      ## sixth box = middle right
-        self.fieldPoints[1,5] = 0.0
+        self.fieldPoints[1,5] = 0.0-0.005
         self.fieldPoints[3,5] = 1
         
         self.fieldPoints[0,6] = -d2     ## seventh box = bottom left
-        self.fieldPoints[1,6] = -d2
+        self.fieldPoints[1,6] = -d2-0.005
         self.fieldPoints[3,6] = 1
         
         self.fieldPoints[0,7] = 0.0     ## eeighth box = bottom middle
-        self.fieldPoints[1,7] = -d2
+        self.fieldPoints[1,7] = -d2-0.005
         self.fieldPoints[3,7] = 1
         
         self.fieldPoints[0,8] =  d2     ## ninth box = bottom right
-        self.fieldPoints[1,8] = -d2
+        self.fieldPoints[1,8] = -d2-0.005
         self.fieldPoints[3,8] = 1
         
         ## set cornerPoints
@@ -203,12 +206,17 @@ class NaoXO():
         '''
         Used to make robot stand and position itself correctly
         '''
+        ## Shutting down awareness
+        self.awareness.stopAwareness()
         
         ## Set stiffnesses, enableing robot to stand up.
         self.motion.setStiffnesses("Body", 1.0)
-        self.behavior.runBehavior("Stand up")
+        self.motion.setStiffnesses("LArm", 0.0)
+        self.motion.setStiffnesses("RArm", 0.0)
+        self.posture.goToPosture("StandInit", 0.5)
         ## Go to walk init pose
         self.motion.walkInit()
+        self.torso_default = self.motion.getPosition("Torso", 2, True)
         
         ## Release stiffnesses of the arms
         self.motion.setStiffnesses("RArm", 0.0)
@@ -219,7 +227,7 @@ class NaoXO():
         
         ## initialize manipulation
         ## TODO: remove hard coding of the goal position height clearance
-        self.manipulationInit(0.05)
+        self.manipulationInit(0.025)
         
         print("[INFO ] Robot pose initialized")
         
@@ -232,6 +240,33 @@ class NaoXO():
         cv2.cv.SetData(self.imgheader, alimg[6])
         self.img = np.asarray(self.imgheader[:,:])
         return self.img
+
+    def checkStates(self):
+        '''
+        Check if all states are the same
+        '''
+        for i in range(len(self.states)-1):
+            for j in range(len(self.states[i])):
+                if not self.states[i][j] == self.states[i+1][j]:
+                    return False
+        return True
+
+    def updateState(self, state):
+        '''
+        Update state
+        '''
+        for i in range(len(self.states)-1, 1, -1):
+            self.states[i] = self.states[i-1]
+        self.states[0] = state
+        if self.checkStates():
+            self.state = state
+
+    def draw_intersections(self, image, intersections):
+        if not intersections:
+            return image
+        for intersection in intersections:
+            cv2.circle(image, intersection, 3,(255,0,0), -1, 8)
+        return image
     
     def findField(self):
         '''
@@ -243,7 +278,8 @@ class NaoXO():
         ## find and merge lines
         self.lines = self.imgproc.mergeEndPoints(self.imgproc.preprocessLines(self.img), 0.05)
         ## if there are no lines, return false	
-        if not self.lines or not len(self.lines)==4:
+        if not self.lines: # or not len(self.lines)==4:
+            #print("No lines %s" % len(self.lines))
             return False
         ## find and index intersections
         self.intersections = self.imgproc.getIndexedIntersections(self.lines)
@@ -253,10 +289,14 @@ class NaoXO():
         self.T_field = np.zeros((4,4), dtype=np.float64)
         ## if there are not exactly four intersections return false
         if not self.intersections:
+            #print("No intersections")
             return False
         if not len(self.intersections)==4:
+            #print("Wrong number of intersections %s" % len(self.intersections))
             return False
-        
+        image_intersections = self.draw_intersections(self.img.copy(), self.intersections)
+        cv2.imshow("Intersections", image_intersections)
+        cv2.waitKey(1)
         ## otherwise, calculate position by using solvePnP from OpenCV
         ## create image points from intersections
         imgPoints = np.zeros((4,2), dtype=np.float64)
@@ -264,14 +304,13 @@ class NaoXO():
                 imgPoints[i,0]=self.intersections[i][0]
                 imgPoints[i,1]=self.intersections[i][1]
         ## object points are created by calling setFieldSize method and can be used for solving PnP
-        self.rvec, self.tvec = cv2.solvePnP(self.objPoints, imgPoints, self.camMatrix, distCoeffs = None)
-        ## rotation matrix
+        _, self.rvec, self.tvec = cv2.solvePnP(self.objPoints, imgPoints, self.camMatrix, distCoeffs = None)
+        ## rotation matrixause minions will die before the tower peaks and reset every minion. Unless the tower 
         R = cv2.cv.CreateMat(3,3,cv2.cv.CV_64FC1)
         ## convert rvec to R
         cv2.cv.Rodrigues2(cv2.cv.fromarray(self.rvec), R)
         
-        ## compose homogeneous transformation matrix
-        
+        ## compose homogeneous transformation matrix        
         Rt = np.zeros((3,4), dtype=np.float64)
         T = np.zeros((4,4), dtype = np.float64)
         T[3,3]=1.0
@@ -320,6 +359,24 @@ class NaoXO():
         
         ## close all OpenCV windows
         cv2.destroyAllWindows()
+
+    def draw_board(self, state):
+        '''
+        Draw state on the image
+        '''
+        state_image = np.ones((300,300,3), np.uint8)
+        state_image[:]=(255,255,255)
+        cv2.line(state_image, (0,100), (300,100), (0,0,0),3,8)
+        cv2.line(state_image, (0,200), (300,200), (0,0,0),3,8)
+        cv2.line(state_image, (100,0), (100,300), (0,0,0),3,8)
+        cv2.line(state_image, (200,0), (200,300), (0,0,0),3,8)
+        boxes = [(30,65),(130,65),(230,65),(30,165),(130,165),(230,165),(30,265), (130,265), (230,265)]
+        for i in range(9):
+            if state[i]=='x':
+                cv2.putText(state_image,state[i],boxes[i],cv2.cv.CV_FONT_HERSHEY_SIMPLEX,2,(0,0,255), 3,8)
+            if state[i]=='o':
+                cv2.putText(state_image,state[i],boxes[i],cv2.cv.CV_FONT_HERSHEY_SIMPLEX,2,(0,255,255), 3,8)
+        return state_image
     
     def drawstuff(self, flag):
         '''
@@ -328,6 +385,7 @@ class NaoXO():
         
         ## open new window
         cv2.namedWindow("Image")
+        cv2.namedWindow("Game")
 
         ## if flag is set to false, just show the original image
         ## else draw valid intersections and bound of th eplaying field
@@ -341,7 +399,9 @@ class NaoXO():
                 cv2.circle(self.img, point, 5, (255,0,0), cv2.cv.CV_FILLED)
         
         ## show image
+        state_image = self.draw_board(self.state)
         cv2.imshow("Image", self.img)
+        cv2.imshow("Game", state_image)
         ## imshow does not work without wait key method
         cv2.waitKey(1)
         
@@ -448,6 +508,9 @@ class NaoXO():
         if self.goal == 0 or self.goal == 3 or self.goal == 6:
             nameEffector = 'LArm'
             nameHand = 'LHand'
+            self.behavior.runBehavior('xo_animations-8894e3/request_token_left')
+        else:
+            self.behavior.runBehavior('xo_animations-8894e3/request_token_right')
         print("[INFO ] Using %s" % nameHand)
         
         ## Update the state of the game
@@ -488,68 +551,65 @@ class NaoXO():
         self.motion.closeHand(nameHand)
         
         ## enable control of the arm
+        print("[INFO ]Enableing whole body motion")
         self.motion.wbEnableEffectorControl(nameEffector, True)
         
         ## extract current position and elevate the hand
         currPos = self.motion.getPosition(nameEffector,2, True)
-        currPos[0] = currPos[0]+0.03
-        currPos[2] = currPos[0]+0.2
+        currPos[0] += 0.00
+        currPos[2] += 0.06
         self.motion.closeHand(nameHand)
         self.motion.setStiffnesses(nameEffector, 1.0)
         
-        for _ in range(5):
-            time.sleep(0.2)
-            self.motion.wbSetEffectorControl(nameEffector, currPos[:3])
-        
+        # lift the hand
+        print("[INFO ]Lifting the hand")
+        self.motion.positionInterpolations(nameEffector, 2, currPos, 7, 3)
         ## extract goal position and move arm towards it
-        goalPosition = [goalPos[0,0], goalPos[1,0], goalPos[2,0]+self.height, 0.0, 0.0, 0.0]
-        
-        for _ in range(5):
-            self.motion.wbSetEffectorControl(nameEffector, goalPosition[:3])
-            time.sleep(0.3)
-        
+        goalPosition = [goalPos[0,0], goalPos[1,0], goalPos[2,0]+self.height+0.08, 0.0, 0.0, 0.0]
+        midPoint = [(goalPosition[0]+currPos[0])/2, (goalPosition[1]+currPos[1])/2, goalPosition[2], currPos[3], currPos[4], currPos[5]]
+        print("[INFO ]Moving to midpoint")
+        self.motion.positionInterpolations(nameEffector, 2, midPoint, 7, 3)
+
+        print("[INFO ]Going to goal position")
+        self.motion.positionInterpolations(nameEffector, 2, goalPosition, 7, 3)
+        goalPosition[3]=0
+        goalPosition[4]=0
+
+        self.motion.positionInterpolations(nameEffector, 2, goalPosition, 7, 3)
+        goalPosition[2]-=0.08
+        self.motion.positionInterpolations(nameEffector, 2, goalPosition, 63, 3)
         ## open hand to release the object
         time.sleep(0.5)
         self.motion.openHand(nameHand)
         time.sleep(0.5)
         
+        
         ## obtain current postion and elevate the arm        
         currPos = self.motion.getPosition(nameEffector,2, True)
-        currPos[2] = currPos[2]+0.1
-        for _ in range(5):
-            self.motion.wbSetEffectorControl(nameEffector, currPos[:3])
-            time.sleep(0.3)
-        time.sleep(0.3)
+        currPos[2] += 0.05
+        currPos[0] -= 0.01
         
+        # lift the hand
+        print("[INFO ]Lifting the hand")
+        self.motion.positionInterpolations(nameEffector, 2, currPos, 7, 3)
         ## return to safe position
         if nameEffector == 'RArm':
-            for _ in range(5):
-                self.motion.wbSetEffectorControl(nameEffector, right_safe[:3])
-                time.sleep(0.3)
+            self.motion.positionInterpolations([nameEffector, "Torso"], 2, [right_safe_1, torso_safe], 63, [5,4])
         else:
-            for _ in range(5):
-                self.motion.wbSetEffectorControl(nameEffector, left_safe[:3])
-                time.sleep(0.3)
+            self.motion.positionInterpolations([nameEffector, "Torso"], 2, [left_safe_1, torso_safe], 63, [5,4])
+
         time.sleep(0.5)
-        
         ## disable whole body control
+        print("[INFO ]Disabling whole body motion")
         self.motion.wbEnableEffectorControl(nameEffector, False)
         ## put hands in specific position, useful for easier object placement
         ## TODO: remove hard coding
-        if nameEffector == 'RArm':
-            angles = self.motion.getAngles("RArm", True)
-            angles[4]=1.5385600328445435
-            self.motion.setAngles('RArm', angles, 0.5)
-        else:
-            angles = self.motion.getAngles("LArm", True)
-            angles[4]=-1.4496722221374512
-            self.motion.setAngles('LArm', angles, 0.5)
         time.sleep(1)
         ## close hand and release stiffnesses
         self.motion.closeHand(nameHand)
         self.motion.setStiffnesses("RArm", 0.0)
         self.motion.setStiffnesses("LArm", 0.0)
-        
+
         ## move was executed, exit 
         return
 
@@ -580,10 +640,10 @@ class NaoXO():
         
         ## if the game is over, check which outcome happened and exit
         if res==2:
-            self.tts.say("Looks like you beat me. Congratulations")
+            self.behavior.runBehavior('xo_animations-8894e3/loose_humility')
             return False
         elif res==0:
-            self.tts.say("Looks like a draw. Congratulations")
+            self.behavior.runBehavior('xo_animations-8894e3/draw_defensive')
             return False
         
         ## if the game is not over, calculate next move
@@ -595,10 +655,11 @@ class NaoXO():
         ## check if robot wins or the game is draw
         if self.checkResult() < 0:
             ## if the game is not over, wait for the opponent to play
+            wait_count = 0
             while True:
                 time.sleep(2)
                 while not self.findField():
-                    print("[WARN ] Field not found")
+                    #print("[WARN ] Field not found")
                     self.drawstuff(False)
                 new_state, _ = self.imgproc.getGameState(self.img, self.lines)
                 
@@ -608,22 +669,21 @@ class NaoXO():
                 if self.checkValidity(new_state, self.state, self.mode):
                     ## if it is valid, robot needs to play its move
                     break
-                else:
+                elif wait_count == 5:
                     ## if the state is not valid, robot waits
                     self.tts.say("I am waiting for you to play")
+                wait_count += 1
             ## if the loop was broken, the game continues
+            
             return True
         else:
             ## game is over, check the result, say appropriate phrase and return false to indicate that the game is over
             if self.checkResult() == 0:
-                self.tts.say("Looks like a draw")
+                self.behavior.runBehavior('xo_animations-8894e3/draw_defensive')
                 return False
             else:
-                self.tts.say("I win, I win, I win, ha ha ha ha ha ha")
+                self.behavior.runBehavior('xo_animations-8894e3/win_celebration')
                 return False
-          
-        ## return
-        return True
     
     def gameInit(self):
         '''
@@ -632,12 +692,15 @@ class NaoXO():
         Returns false if there are too many objects on the playing field
         '''
         ## wait for the front tactile sensor to be touched
+        old_state = ''
         while True:
             fieldFound = self.findField()
             self.drawstuff(fieldFound)
             ## update the state of the game
+            old_state = self.state
             self.state, self.board = self.imgproc.getGameState(self.img, self.lines)
-            print("[INFO ] Game state %s" % (self.state))
+            if old_state != self.state:
+                print("[INFO ] Game state %s" % (self.state))
             if fieldFound and self.memory.getData("FrontTactilTouched"):
                 break
                 

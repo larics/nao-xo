@@ -40,6 +40,35 @@ class ImgProcessingXO():
         self.thetaRes = 1.0*theta/thetaDiv
         ## threshold for accumulator value to be classified as line
         self.houghThreshold = houghThresh
+
+    def draw_lines(self, image, lines):
+        if len(lines[0])==2:
+            for rho, theta in lines:
+                a = np.cos(theta)
+                b = np.sin(theta)
+                x0 = a*rho
+                y0 = b*rho
+                x1 = int(x0 + 1000*(-b))
+                y1 = int(y0 + 1000*(a))
+                x2 = int(x0 - 1000*(-b))
+                y2 = int(y0 - 1000*(a))
+                cv2.line(image,(x1,y1),(x2,y2),(0,0,255),2)
+            return image
+        elif len(lines[0])==4:
+            for _, _, rho, theta in lines:
+                a = np.cos(theta)
+                b = np.sin(theta)
+                x0 = a*rho
+                y0 = b*rho
+                x1 = int(x0 + 1000*(-b))
+                y1 = int(y0 + 1000*(a))
+                x2 = int(x0 - 1000*(-b))
+                y2 = int(y0 - 1000*(a))
+                cv2.line(image,(x1,y1),(x2,y2),(0,0,255),2)
+            return image
+
+        return image
+
         
     def preprocessLines(self, image):
         '''
@@ -49,11 +78,17 @@ class ImgProcessingXO():
         '''
         ## Convert to grayscale
         self.img_grayscale = cv2.cvtColor(image,cv2.cv.CV_BGR2GRAY)
+        cv2.imshow("Graycale", self.img_grayscale)
         ## Extract edges
         edges = cv2.Canny(self.img_grayscale, self.lCanny, self.uCanny)
+        cv2.imshow("Edges", edges)
+        cv2.waitKey(1)
         ## Apply Hough transformation to obtain lines
         try:
             lines = cv2.HoughLines(edges, self.rhoRes, self.thetaRes, self.houghThreshold)[0]
+            lines_image = self.draw_lines(image.copy(), lines)
+            cv2.imshow("Lines", lines_image)
+            cv2.waitKey(1)
         except:
             print("No lines found")
             return []
@@ -97,7 +132,7 @@ class ImgProcessingXO():
                         ## one point on the edge of the image found, search the other point
                         if y1>=0 and y1<=self.width:
                             ## line cannot intersect both x=0 and y=0 with negative b
-                            print("This should never happen")
+                            print("[WARN ]This should never happen")
                             ## TODO: should raise an error or be omitted
                             pts2.append((0, y1))
                         elif x2>=0 and x2<=self.height:
@@ -159,9 +194,6 @@ class ImgProcessingXO():
         '''
         Merges end lines based on their endpoints in the image. If distance between endings of several lines is smaller than RelTol, lines will be merged
         '''
-        ## check if there are lines
-        #if not lines:
-        #	return []
         
         ## calculate end points for lines
         pts1, pts2 = self.getEndPoints(lines)
@@ -205,7 +237,7 @@ class ImgProcessingXO():
                     rho_m = float(pt1[1] + pt2[1]) / 2
                 else:
                     ## line is neither horizontal nor vertical, calculate rho
-                    rho_m = sin(theta_m) * (pt1[1] * pt2 [0] - pt1[0] * pt2[1]) / (pt2[0] - pt1[0])
+                    rho_m = sin(theta_m) * (pt1[1] * pt2 [0] - pt1[0] * pt2[1]) / (pt2[0] - pt1[0]+1e-9)
                 ## add new line to the list of merged lines
                 lines_merged.append((rho_m, theta_m))
                 ## flag line i as processed
@@ -249,15 +281,13 @@ class ImgProcessingXO():
         '''
         ## create bins by dividig the circle (360 degrees) with the resolution. Each bin will be checked if it contains the black ray
         bin_rays = [0]*(360/res)
-        x = 0
-        y = 0
         ## for each ray/bin denoted by its relative angle
         for bin_ray in range(360/res):
             ## check only inside the circle with given radius
-            for rho in range(1, radius):
+            for rho in range(radius/5, radius):
                 ## calculate point on the ray
-                x = cos(res*bin_ray*3.1415926/180.0) * rho;
-                y = sin(res*bin_ray*3.1415926/180.0) * rho;
+                x = cos(res*bin_ray*3.1415926/180.0) * rho
+                y = sin(res*bin_ray*3.1415926/180.0) * rho
                 x = int(x + intersection[0])
                 y = y + int(intersection[1])
                 ## if the point on the ray is in the image
@@ -280,7 +310,7 @@ class ImgProcessingXO():
         ## one-dimensional connected components clustering to merge the rays
         labels = [0]*360
         ## counting how many clusters there are, count value will also be label for each cluster
-        count = 0;
+        count = 0
         ## for all bins
         for i in range(2*360/res):
             ## in worst case we have to pass all rays twice, due to problem being circular
@@ -496,8 +526,8 @@ class ImgProcessingXO():
         TODO: remove hard coding of the thresholds
         '''
         ## segment the image, since crosses are red we need to segment twice
-        binaryImg1 = cv2.inRange(imgHSV, np.asarray(cv2.cv.Scalar(155, 40, 35)), np.asarray(cv2.cv.Scalar(180, 255, 255)))
-        binaryImg2 = cv2.inRange(imgHSV, np.asarray(cv2.cv.Scalar(0, 40, 35)), np.asarray(cv2.cv.Scalar(20, 255, 255)))
+        binaryImg1 = cv2.inRange(imgHSV, np.asarray(cv2.cv.Scalar(155, 60, 65)), np.asarray(cv2.cv.Scalar(180, 255, 255)))
+        binaryImg2 = cv2.inRange(imgHSV, np.asarray(cv2.cv.Scalar(0, 60, 65)), np.asarray(cv2.cv.Scalar(10, 255, 255)))
         ## add two binary images
         binaryImg = cv2.add(binaryImg1, binaryImg2)
         ## erode and dilate
@@ -640,3 +670,4 @@ class ImgProcessingXO():
         
         ## return the list containing the state of the game
         return state, board       
+    

@@ -6,8 +6,8 @@ Definitions for image processing
 
 
 ## Canny edge detector parameters
-lowerCanny = 40
-upperCanny = 115
+lowerCanny = 120	
+upperCanny = 200
 
 ## Hough transformation parameters
 houghThreshold = 95
