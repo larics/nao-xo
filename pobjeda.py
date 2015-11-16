@@ -17,9 +17,9 @@ def pobjeda (ploca):
             rezultat="pobjeda x"
         elif brojo==3:
             rezultat="pobjeda o"
-        # print("brojx u stupcima je "+str(brojx))
-        # print("brojo u stupcima je "+str(brojo))
-        # print("brojp u stupcima je "+str(brojp))
+       # print("brojx u stupcima je "+str(brojx))
+       # print("brojo u stupcima je "+str(brojo))
+       # print("brojp u stupcima je "+str(brojp))
 #REDCI
     for i in range(3):
         brojx=0
@@ -36,9 +36,9 @@ def pobjeda (ploca):
             rezultat="pobjeda x"
         elif brojo==3:
             rezultat="pobjeda o"
-        # print("brojx u redcima je "+str(brojx))
-        # print("brojo u redcima je "+str(brojo))
-        # print("brojp u redcima je "+str(brojp))
+       # print("brojx u redcima je "+str(brojx))
+       # print("brojo u redcima je "+str(brojo))
+       # print("brojp u redcima je "+str(brojp))
 #DIJAGONALE
 #1
     brojx=0
@@ -55,9 +55,9 @@ def pobjeda (ploca):
             rezultat="pobjeda x"
     elif brojo==3:
             rezultat="pobjeda o"
-    # print("brojx u dijagonali 1 je "+str(brojx))
-    # print("brojo u dijagonali 1 je "+str(brojo))
-    # print("brojp u dijagonali 1 je "+str(brojp))
+   # print("brojx u dijagonali 1 je "+str(brojx))
+   # print("brojo u dijagonali 1 je "+str(brojo))
+   # print("brojp u dijagonali 1 je "+str(brojp))
 #2
     brojx=0
     brojo=0
