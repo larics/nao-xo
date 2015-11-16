@@ -527,7 +527,7 @@ class ImgProcessingXO():
         '''
         ## segment the image, since crosses are red we need to segment twice
         binaryImg1 = cv2.inRange(imgHSV, np.asarray(cv2.cv.Scalar(155, 60, 65)), np.asarray(cv2.cv.Scalar(180, 255, 255)))
-        binaryImg2 = cv2.inRange(imgHSV, np.asarray(cv2.cv.Scalar(0, 60, 65)), np.asarray(cv2.cv.Scalar(20, 255, 255)))
+        binaryImg2 = cv2.inRange(imgHSV, np.asarray(cv2.cv.Scalar(0, 60, 65)), np.asarray(cv2.cv.Scalar(10, 255, 255)))
         ## add two binary images
         binaryImg = cv2.add(binaryImg1, binaryImg2)
         ## erode and dilate
