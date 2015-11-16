@@ -39,7 +39,7 @@ if __name__ == '__main__':
         
         ## initialize robot stance
         player.stanceInit()
-        
+
         ## initialize game, if the game does not start then exit
         if not player.gameInit():
             player.cleanup()
@@ -59,6 +59,7 @@ if __name__ == '__main__':
         player.cleanup()
         player=[]
         sys.exit()
+
     ## catch all errors        
     except:
         ## if player was created, do cleanup
