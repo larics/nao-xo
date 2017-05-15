@@ -289,7 +289,7 @@ class ImgProcessingXO():
                 x = cos(res*bin_ray*3.1415926/180.0) * rho
                 y = sin(res*bin_ray*3.1415926/180.0) * rho
                 x = int(x + intersection[0])
-                y = y + int(intersection[1])
+                y = int(y + intersection[1])
                 ## if the point on the ray is in the image
                 if( x>0 and y>0 and x<self.height and y<self.width):
                     ## sum up the inverted intensities on the ray (finding black rays on white paper)
